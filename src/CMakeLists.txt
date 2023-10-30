@@ -13,17 +13,32 @@ target_link_options(core PRIVATE
     ${link_flags}
 )
 
-add_executable( main.elf
-	main.s
+add_executable( gpio.elf
+	gpio.s
 )
 
-target_include_directories(main.elf PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include/vendor/)
-target_link_options(main.elf PRIVATE 
+target_include_directories(gpio.elf PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include/vendor/)
+target_link_options(gpio.elf PRIVATE 
     ${arch_flags} 
     ${common_flags}
     ${link_flags}
 )
 
-target_link_libraries(main.elf
+target_link_libraries(gpio.elf
+	core
+)
+
+add_executable( ram.elf
+	ram.s
+)
+
+target_include_directories(ram.elf PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include/vendor/)
+target_link_options(ram.elf PRIVATE 
+    ${arch_flags} 
+    ${common_flags}
+    ${link_flags}
+)
+
+target_link_libraries(ram.elf
 	core
 )

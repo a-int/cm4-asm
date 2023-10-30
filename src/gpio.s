@@ -3,6 +3,7 @@
 .thumb
 
 .global main
+
 main:
         bl led_setup
 led_switch:
@@ -47,7 +48,7 @@ led_setup:
         bx lr
         
 delay:
-        ldr r0, =0xfffff
+        ldr r0, =0xfffff8
 while_delay:
         subs r0, #1
         bne while_delay
