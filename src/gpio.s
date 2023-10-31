@@ -16,21 +16,16 @@ RCC_AHB1ENR = 0x40023830
 
 .global main
 main:
-        bl led_setup
+        bl init_led
 led_switch:
-        ldr r1, = GPIOC_BSRR
-        ldr r0, = GPIOx_BSRR_BS13
-        str r0, [r1]
+        bl led_on        
         bl delay
-        
-        ldr r1, =GPIOC_BSRR
-        ldr r0, =GPIOx_BSRR_BR13
-        str r0, [r1]
+        bl led_off
         bl delay
         
         b led_switch
         
-led_setup:
+init_led:
         ldr r1, = RCC_AHB1ENR 
         ldr r0, [r1] @ save actual data to register
         orr r0, #0x4 @ GPIOC
@@ -58,6 +53,21 @@ led_setup:
         and r0, r2 @ PC13 no-push no-pull
         str r0, [r1]
 
+        bx lr
+
+.type led_on, %function
+led_on:
+        push {lr}
+        ldr r1, = GPIOC_BSRR
+        ldr r0, = GPIOx_BSRR_BS13
+        str r0, [r1]
+        pop { pc }
+
+.type led_off, %function
+led_off:
+        ldr r1, =GPIOC_BSRR
+        ldr r0, =GPIOx_BSRR_BR13
+        str r0, [r1]
         bx lr
         
 delay:
