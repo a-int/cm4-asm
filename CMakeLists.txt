@@ -50,7 +50,8 @@ set(compile_flags
 # Linker Options
 set(link_flags
     -Wl,--gc-sections -static
-    -T ${CMAKE_CURRENT_LIST_DIR}/include/vendor/STM32F411CEUX.ld
+    # -T ${CMAKE_CURRENT_LIST_DIR}/include/vendor/STM32F411CEUX.ld
+    -T ${CMAKE_CURRENT_LIST_DIR}/src/stm32f411.ld
     -flto
     -Wl,--start-group -lc -lm -lstdc++ -lsupc++ -Wl,--end-group
     -Wl,--print-memory-usage
