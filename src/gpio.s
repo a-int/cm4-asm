@@ -38,19 +38,24 @@ led_setup:
         
         ldr r1, = GPIOC_MODER
         ldr r0, [r1]
-        and r0, #(!GPIOx_MODER_MODE13) @ clear PC13
+        ldr r2, = GPIOx_MODER_MODE13
+        mvns r2,r2
+        and r0, r2 @ clear PC13
         orr r0, #GPIOx_MODER_MODE13_0 @ set PC13 as output
         str r0, [r1]
         
         ldr r1, = GPIOC_OTYPER 
         ldr r0, [r1]
-        ldr r2, = #(!GPIOx_OTYPER_OT13)
+        ldr r2, = GPIOx_OTYPER_OT13
+        mvns r2, r2
         and r0, r2 @ set PC13 to 0
         str r0, [r1]
         
         ldr r1, = GPIOC_PUPDR
         ldr r0, [r1]
-        and r0, #(!GPIOx_PUPDR_PUPD13)@ PC13 no-push no-pull
+        ldr r2, =GPIOx_PUPDR_PUPD13
+        mvns r2, r2
+        and r0, r2 @ PC13 no-push no-pull
         str r0, [r1]
 
         bx lr
