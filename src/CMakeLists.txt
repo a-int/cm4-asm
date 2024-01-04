@@ -40,3 +40,18 @@ target_link_options(ram.elf PRIVATE
 target_link_libraries(ram.elf
 	core
 )
+
+add_executable( test.elf
+	test.s
+)
+
+target_include_directories(test.elf PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include/vendor/)
+target_link_options(test.elf PRIVATE 
+    ${arch_flags} 
+    ${common_flags}
+    ${link_flags}
+)
+
+target_link_libraries(test.elf
+	core
+)
