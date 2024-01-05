@@ -156,10 +156,45 @@ t6: @@@@@@@@@@@@@ unsigned tests @@@@@@@@@@@@@@@@@@@
 	subs r3, r0, #0x0f	@ r0 is the same as 0x0f
 	bhi texit @ go to exit if r0 is higher than the 0x0f
 texit: NOP
-  
 
+@@@@@@@@@@@ CBZ/CBZN and IT blocks @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+	@ cbz/cbzn is an ooperation for quick zero/nonzero check with branch
+	mov r0, #0x5
+cbz_while: 
+	cbz r0, cbz_while_exit
+	subs r0, #1
+	b cbz_while
+cbz_while_exit: NOP
 
+	movs r0, #0x0	@ trigger Z flag
+	ITE EQ	@ if Z is set
+	@movseq r0, #0x1	@ its prohibited to change APSR in IT block
+						@ for that line the Z will be reset so except
+						@ block will be executed too
+						@ 16 bit commands (without S suffix) won't change APSR
+	moveq r0, #0x01	@ the correct command style for IT block
+	movne r0, #0x2 @ its ok for last command in IT block 
+					@ the comands in IT block anyway take a cycle even if not used
+@@@@@@@@@@@@@@@ Table branches @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+	@ tbb, tbh
+	movs r0, 0x01	@ select case #1
+	tbb [pc, r0]		@ select the case number
+tb_start:
+	.byte ((tb_case1-tb_start)/2)	@ case 0
+	.byte ((tb_case2-tb_start)/2)	@ case 1
+	.byte ((tb_case3-tb_start)/2)	@ case 2
 
+.align 2	@ the alignmnet is required if table has not even number of elements
+tb_case1:
+	movs r0, #1
+	b tb_exit
+tb_case2:
+	movs r0, #2
+	b tb_exit
+tb_case3:
+	movs r0, #3
+tb_exit:
+	NOP
   b main
 
 .align 4  @ the data must be aligned
