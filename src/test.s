@@ -66,6 +66,34 @@ ldr_while:
   rors r0, #31    @ there is no rol so "rol r0, #imm" is eq ror r0, #(32-imm)
   orrs r0, 0x80000000 @set the bit 31 for asr
   asrs r0, #1 @ 0x80000001 -> 0xC0000000
+@@@@@@@@@@@@@@@@@@@@@ extend operations @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+  @ sxtb, sxth, uxtb, uxth   rev, rev16, revsh
+  ldr r0, =0x55aa8765
+  sxtb r1, r0 @ r1 = 0x00000065  
+  sxth r1, r0 @ r1 = 0xffff8765  
+  uxtb r1, r0 @ r1 = 0x00000065  
+  uxth r1, r0 @ r1 = 0x00008765  
+
+  rev r1, r0  @ r1 = 0x6587aa55
+  rev16 r1, r0 @ r1 = 0xaa556587
+  revsh r1, r0 @ r1 = 0x00006587
+@@@@@@@@@@@@@@@@@@@@@ bit-field operations @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+  @ bfc, bfi, clz, rbit, sbfx, ubfx
+
+  mov r0, #0xff00
+  mov r1, #0xffff
+  bfc r0, #0, 16 @ clear 16 bits starting from 0 bit
+  bfi r0, r1, #0, #4 @ copy 4 bits from r1 to r0 starting from 8th bit of r1
+  clz r0, r0  @ count leading zeroes r0 = 0x0000000f
+  rbit r0, r0 @ reverse bits r0 = 0x0000000f
+  sbfx r0, r1, #0, #4 @ copy 4 bits from 0th from r1 to r0 (sign-extended)
+  ubfx r0, r1, #0, #4 @ copy 4 bits from 0th from r1 to r0
+@@@@@@@@@@@@@@@@@@@@@ 
+
+
+
+
+
 
   b main
 
