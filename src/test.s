@@ -202,7 +202,27 @@ tb_exit:
 	ssat r1, #16, r0	@ signed saturation fixes this negative number at
 						@ maximum negative 16 bit signed value eg. 0x8000
 	
+############# barriers #####################################
+############# SVC ##########################################
+
+@@@@@@@@@@ bit-band (may not be supported by some CM4/3) @@@@@@@@@@@@@@@@@@@@@@@
+
+	ldr r0, =0x20000000	@ that minimum address of bit-band region in SRAM
+	ldr r1, =0x3a558eFF	@ some constant to write
+	str r1, [r0]		@ save the value into the memory
+
+	@ clear the bit 2 using bit-band operatios
+	ldr r0, =0x22000008	@ bit 0 is 0x...0; bit 1 is 0x...4 and so on 
+	mov r1, #0
+	str r1, [r0]	@ clear the bit 2	
 	
+	ldr r1, [r0]	@ bit 2 is zero eg. r1 will be zero too
+	ldr r0, =0x20000000
+	ldr r1, [r0]	@ SRAM[0x20000000] now is 0x3a558eFB
+
+
+
+
 	b main
 .align 4  @ the data must be aligned
 array:
