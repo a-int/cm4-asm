@@ -195,8 +195,15 @@ tb_case3:
 	movs r0, #3
 tb_exit:
 	NOP
-  b main
-
+@@@@@@@@@@@@@@@@@ saturation @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@	ssat, usat
+	ldr r0, =-145348	@ some negative 18 bit value
+	usat r1, #16, r0	@ unsigned saturation fixes this negative number on 0
+	ssat r1, #16, r0	@ signed saturation fixes this negative number at
+						@ maximum negative 16 bit signed value eg. 0x8000
+	
+	
+	b main
 .align 4  @ the data must be aligned
 array:
   .word 0x1
