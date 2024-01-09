@@ -203,6 +203,19 @@ tb_exit:
 						@ maximum negative 16 bit signed value eg. 0x8000
 	
 ############# barriers #####################################
+ 	@ MSB, DSB, ISB
+	@ one of the usage of barries is to ensure the data is written.
+	@ almost all section are bufferable (SRAM, devices, peripheral, vendor specific devices)
+	@ except code, ram, debug, private peripheral
+	@ so if something is important for the next step is written its moved in buffer first
+	@ to ensure the data has been written the DSB has to be exetued (+ISB possible)
+	@ for example 
+	@ *copy vector table into the new position*
+	dmb @ memory access sync
+	@ SVC->VTOR = newTablePosition // update vector table address using offset
+	dsb @ ensure the VTOR was updated
+
+
 ############# SVC ##########################################
 
 @@@@@@@@@@ bit-band (may not be supported by some CM4/3) @@@@@@@@@@@@@@@@@@@@@@@
@@ -220,6 +233,69 @@ tb_exit:
 	ldr r0, =0x20000000
 	ldr r1, [r0]	@ SRAM[0x20000000] now is 0x3a558eFB
 
+@@@@@@@@@@@@ ISR @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+	@ the ISR can be masked (eighet all except hard fault, NMI and reset, or hard falut too)
+	@ can be determined the currently executing ISR via IPSR (xPSR[7:0])
+	@ can be masked by BASEPRI. The disabled if 0 and blocks all ISR with the same or higher (number) level
+
+	@ ISR 0-15 are the systemd interrupts for reset, hard fault, other faults, debug, SVC, SySTick
+	@ ISR 16- 240 are the vendor specific ISRs for timers, peripherals and so on
+
+	@ the priotity level is determined by N MSB bits in BASEPRI
+	@ the max is 8 bit [7:0]. If less than lsb are cutting of and it always 0 (writing is ignored)
+	@ when configuring BASEPRI the number of groups and sub-groups has to be considered
+	@ the number of groups defines the number of pre-emtions 
+	@ and sub groups defines the number of ISRs at that level do be selected
+	@ if 3 bits are available and group are [7:6] and sub are [5] then  4 groups and 2 sub groups are availabe 
+	@ the next ISR to be execute is the ISR with highest gorup and sub-group (in that group)
+	@ so for the config with such 3 bits if 2 ISR are happend (0x05, 0x06) they have the same group and sub
+	@ then the the level of ISR is considered and 0x05 takes place 1st
+
+	@ VTOR must be aligned to the size of factor 2 enough to store table
+	@ the ISR is served (the mode is changed from thread to Handler) only if that is the currently highest
+	@ pending ISR. And the next pending may be considered only if that mode switch has occured.
+	@ work the same for level based ISRs and pulse ISRs (the pulses considered as the same pending until mode switch)
+	@ pending status may occur even if the ISR is disabled, so before enable it clear interrupt pending status register
+
+@@@@@@@@@ NVIC operations @@@@@@@@@@@@@@@@@@@@@
+	@ iser/icer, ispr/icpr, iabr, ip, stir
+	NVIC_ISER0 = 0xE000E100	@ NVIC Interrupt Set Enable Register 0
+	NVIC_ICER0 = 0xE000E180	@ NVIC Interrupt Clear Enable Register 0
+	NVIC_IABR0 = 0xE000E300	@ NVIC Interrupt Active Bit Register 0
+	ldr r1, = NVIC_ISER0	@ load the address of IRQ Set Enable Reg 0
+	movs r0, 0x1			@ select the IRQ 1
+	str r0, [r1]			@ enable the 1st non system IRQ 
+
+	ldr r1, = NVIC_IABR0	@ set new address
+	ldr r2, [r1]			@ load active bits for first 32 non system IRQs
+	ands r2, #0x100			@ check if the 1st non system IRQ is active 
+							@ (IABR works with system IRQs too so 1st non system after 16 of system IRqs)
+	ITT EQ					@ if no active then turn that IRQ off
+	ldreq r1, = NVIC_ICER0	@ load the address of IRQ Clear Enable Reg 0
+	streq r0, [r1]			@ disable 1st non system IRQ
+
+	NVIC_IP0 = 0xE000E400
+	ldr r1, =NVIC_IP0
+	mov r0, #0xff
+	str r0, [r1]			@ try to write 8 ones to priority register of IRQ 16
+	ldr r0, [r1]			@ check how many ones available for priority
+
+	NIVC_STIR0 = 0xE000EF00
+	ldr r1, =NIVC_STIR0
+	mov r0, #0x0	@ the number of external IRQ to trigger (IRQ 16 == 0x00)
+	str r0, [r1]	@ trigger IRQ 16
+					@ due to disabled status of IRQ 16 its in constant pending status
+	ldr r1, =NVIC_IABR0
+	ldr r2, [r1]	@ check active status of triggered IRQ (the pending IRQ is marked by '1')
+
+	NVIC_ISPR0 = 0xE000E200
+	NVIC_ICPR0 = 0xE000E280
+	ldr r1, =NVIC_ICPR0
+	mov r0, #0x1
+	str r0, [r1] @clear the pending status of IRQ 16
+
+	ldr r1, =NVIC_ISPR0
+	ldr r2, [r1] 		@ check the pending status of first 32 external IRQs
 
 
 
